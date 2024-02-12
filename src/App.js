@@ -1,69 +1,66 @@
-import React, {useState,useEffect} from 'react'
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {MDBTable, MDBTableHead, MDBTableBody, MDBRow, MDBCol, MDBContainer, MDBBtnGroup, MDBBtn,MDBPagination,MDBPaginationItem,MDBPaginationLink} from "mdb-react-ui-kit"
+import { MDBTable, MDBTableHead, MDBTableBody, MDBRow, MDBCol, MDBContainer, MDBBtnGroup, MDBBtn, MDBPagination, MDBPaginationItem, MDBPaginationLink } from "mdb-react-ui-kit";
 import './App.css';
 
 function App() {
-  const [data, setData ]=useState([]);
-  const [value, setValue]= useState("");
-  const [sortValue, setSortValue]= useState("");
-  const [currentPage, setCurrentPage]= useState(0);
-  const [pageLimit]= useState(5);
+    const [data, setData] = useState([]);
+    const [value, setValue] = useState("");
+    const [sortValue, setSortValue] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [pageLimit] = useState(5);
+    const [searchValue, setSearchValue] = useState('');
 
-  const sortOptions=["employee_id","date_of_birth","salary"];
-  const filterOption=["Java","C#","Python","JavaScript", "PHP"];
+    const sortOptions = ["employee_id", "date_of_birth", "salary"];
+    const filterOption = ["Java", "C#", "Python", "JavaScript", "PHP"];
 
-  useEffect(()=>{
-  loadEmployeeData(0,5,0);},[]);
+    useEffect(() => {
+        loadEmployeeData(0, 5, 0);
+    }, []);
 
-  const loadEmployeeData =async(start,end,increase) =>  {
-    return await axios
-    .get(`http://localhost:5000/employees?_start=${start}&_end=${end}`)
-    .then((response) => {
-      setData(response.data);
-      setCurrentPage(currentPage+increase);
-    })
-    .catch((err) => console.log(err));
-  }
-  console.log("data",data);
+    const loadEmployeeData = async (start, end, increase) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/employees?_start=${start}&_end=${end}`);
+            setData(response.data);
+            setCurrentPage(currentPage + increase);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
-  const handlereset=()=> {
-    loadEmployeeData();
+    const handlereset = () => {
+      // Load the first page of data with 5 rows
+      loadEmployeeData(0, pageLimit, 0);
   };
-  const handleSearch= async(e)=>{
+
+  const handleSearch = (e) => {
     e.preventDefault();
-    console.log("Searching for:", value);
-    return await axios.get(`http://localhost:5000/employees?q=${value}`)
-    .then((response) =>{
-      setData(response.data);
-      setValue("");
-
-    } )
-    .catch((err)=>console.log(err));
+    const filteredEmployees = data.filter((item) =>
+      item.first_name.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    setData(filteredEmployees);
   };
 
-  const handleSort= async(e)=>{
-    let value=e.target.value;
-    setSortValue(value);
-    return await axios.get(`http://localhost:5000/employees?_sort=${value}&_order=asc`)
-    .then((response) =>{
-      setData(response.data);
-      setValue("");
+    const handleSort = async (e) => {
+        const value = e.target.value;
+        setSortValue(value);
+        try {
+            const response = await axios.get(`http://localhost:5000/employees?_sort=${value}&_order=asc`);
+            setData(response.data);
+        } catch (err) {
+            console.log(err);
+        }
+    };
 
-    } )
-    .catch((err)=>console.log(err));
-  };
-
-  const handlefilter= async(value)=>{
-    return await axios.get(`http://localhost:5000/employees?programming=${value}`)
-    .then((response) =>{
-      setData(response.data);
-      setValue("");
-
-    } )
-    .catch((err)=>console.log(err));
-  };
-
+    const handleFilter = async (value) => {
+        try {
+            const response = await axios.get(`http://localhost:5000/employees?programming=${value}`);
+            setData(response.data);
+            setValue("");
+        } catch (err) {
+            console.log(err);
+        }
+    };
   
     const renderPagination = () => {
       if (currentPage === 0) {
@@ -124,12 +121,11 @@ function App() {
       onSubmit={handleSearch}
       >
         <input
-        type="text"
-        className="form-control"
-        placeholder="Search Name...."
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        />
+  type="text"
+  placeholder="Search"
+  value={searchValue}
+  onChange={(e) => setSearchValue(e.target.value)}
+/>
         
           <MDBBtn type="submit" color="dark">
             Search
@@ -206,10 +202,23 @@ function App() {
           ))}
           </select>
           </MDBCol>
-        <MDBCol size="4"><h5>Filter By:</h5>
+        
         <MDBBtnGroup>
-          <MDBBtn color="dark" onClick={()=>handlefilter("programming")}>programming</MDBBtn></MDBBtnGroup></MDBCol>
+        <MDBCol size="4">
+          <h5>Filter By:</h5>
+          <select style={{width: "50%", borderRadius: "1px", height: "30px"}}>
+          onChange={handleFilter} 
+          value={sortValue}
 
+          <option>Please select value</option>
+          {filterOption.map((item,index)=>(
+            <option value={item} key={index}>
+            {item}
+            </option>
+          ))}
+          </select>      
+          </MDBCol>    
+          </MDBBtnGroup>  
       </MDBRow>
     </MDBContainer>
   );
