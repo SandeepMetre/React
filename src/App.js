@@ -7,18 +7,22 @@ function App() {
   const [data, setData ]=useState([]);
   const [value, setValue]= useState("");
   const [sortValue, setSortValue]= useState("");
-  const [currentpage, setcurrentpage]= useState(0);
-  const [pagelimit]= useState(5);
+  const [currentPage, setCurrentPage]= useState(0);
+  const [pageLimit]= useState(5);
 
-  const sortOptions=["date_of_birth","salary","first_name","last_name"];
+  const sortOptions=["employee_id","date_of_birth","salary"];
+  const filterOption=["Java","C#","Python","JavaScript", "PHP"];
 
   useEffect(()=>{
   loadEmployeeData(0,5,0);},[]);
 
   const loadEmployeeData =async(start,end,increase) =>  {
     return await axios
-    .get("http://localhost:5000/employees?_start=${start}&_end=${end}")
-    .then((response) => setData(response.data))
+    .get(`http://localhost:5000/employees?_start=${start}&_end=${end}`)
+    .then((response) => {
+      setData(response.data);
+      setCurrentPage(currentPage+increase);
+    })
     .catch((err) => console.log(err));
   }
   console.log("data",data);
@@ -28,6 +32,7 @@ function App() {
   };
   const handleSearch= async(e)=>{
     e.preventDefault();
+    console.log("Searching for:", value);
     return await axios.get(`http://localhost:5000/employees?q=${value}`)
     .then((response) =>{
       setData(response.data);
@@ -50,7 +55,7 @@ function App() {
   };
 
   const handlefilter= async(value)=>{
-    return await axios.get(`http://localhost:5000/employees?filter=${value}`)
+    return await axios.get(`http://localhost:5000/employees?programming=${value}`)
     .then((response) =>{
       setData(response.data);
       setValue("");
@@ -59,17 +64,60 @@ function App() {
     .catch((err)=>console.log(err));
   };
 
-  const renderpagination=()=>{
-    if(currentpage===0){
-      
-    }
-  }
+  
+    const renderPagination = () => {
+      if (currentPage === 0) {
+          return (
+              <MDBPagination className="mb-0">
+                  <MDBPaginationItem>
+                      <MDBPaginationLink>1</MDBPaginationLink>
+                  </MDBPaginationItem>
+                  <MDBPaginationItem>
+                      <MDBBtn onClick={() => loadEmployeeData(5, 10, 1)}>
+                          Next
+                      </MDBBtn>
+                  </MDBPaginationItem>
+              </MDBPagination>
+          );
+      } else if (currentPage < pageLimit - 1 && data.length === pageLimit) {
+          return (
+              <MDBPagination className="mb-0">
+                  <MDBPaginationItem>
+                      <MDBBtn onClick={() => loadEmployeeData((currentPage - 1) * 5, currentPage * 5, -1)}>
+                          Prev
+                      </MDBBtn>
+                  </MDBPaginationItem>
+                  <MDBPaginationItem>
+                      <MDBPaginationLink>{currentPage + 1}</MDBPaginationLink>
+                  </MDBPaginationItem>
+                  <MDBPaginationItem>
+                      <MDBBtn onClick={() => loadEmployeeData((currentPage + 1) * 5, (currentPage + 2) * 5, 1)}>
+                          Next
+                      </MDBBtn>
+                  </MDBPaginationItem>
+              </MDBPagination>
+          );
+      } else {
+          return (
+              <MDBPagination className="mb-0">
+                  <MDBPaginationItem>
+                      <MDBBtn onClick={() => loadEmployeeData((currentPage - 1) * 5, currentPage * 5, -1)}>
+                          Prev
+                      </MDBBtn>
+                  </MDBPaginationItem>
+                  <MDBPaginationItem>
+                      <MDBPaginationLink>{currentPage + 1}</MDBPaginationLink>
+                  </MDBPaginationItem>
+              </MDBPagination>
+          );
+      }
+  };
   return (
     <MDBContainer>
       <form style={{
         margin:"auto",
         padding:"15px",
-        maxwidth:"400px",
+        maxWidth:"400px",
         alignContent:"center",
       }}
       className="d-flex input-group w-auto"
@@ -100,7 +148,7 @@ function App() {
           <MDBTable>
             <MDBTableHead dark>
               <tr>
-              <th scope='col'>No</th>
+              
                 <th scope='col'>employee_id</th>
                 <th scope='col'>First_name</th>
                 <th scope='col'>Last_name</th>
@@ -122,7 +170,7 @@ function App() {
               data.map((item,index) => (
                 <MDBTableBody key= {index}>
                   <tr>
-                    <th scope= "row" >{index+1}</th>
+                    
                     <td>{item.employee_id}</td>
                     <td>{item.first_name}</td>
                     <td>{item.last_name}</td>
@@ -136,9 +184,17 @@ function App() {
             )}
           </MDBTable>
       </MDBRow>
+      <div style={{
+        margin:"auto",
+        padding:"15px",
+        maxWidth:"250px",
+        alignContent:"center",
+      }}>
+        {renderPagination()}
+      </div>
       </div>
       <MDBRow>
-        <MDBCol size="8"><h5>Sort By:</h5><select style={{width:"50%",borderradius:"1px",height:"30px"}}>
+        <MDBCol size="8"><h5>Sort By:</h5><select style={{width:"50%",borderRadius:"1px",height:"30px"}}>
           onChange={handleSort} 
           value={sortValue}
 
