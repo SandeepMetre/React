@@ -41,26 +41,34 @@ function App() {
     setData(filteredEmployees);
   };
 
-    const handleSort = async (e) => {
-        const value = e.target.value;
-        setSortValue(value);
-        try {
-            const response = await axios.get(`http://localhost:5000/employees?_sort=${value}&_order=asc`);
-            setData(response.data);
-        } catch (err) {
-            console.log(err);
-        }
-    };
+  const handleSort = async (e) => {
+    const value = e.target.value;
+    setSortValue(value);
+    if (value === "date_of_birth") {
+      const filteredData = data.filter((item) => item.date_of_birth);
+      const sortedData = filteredData.sort((a, b) => {
+        const dateA = new Date(a.date_of_birth);
+        const dateB = new Date(b.date_of_birth);
+        return dateA - dateB;
+      });
+      setData(sortedData);
+    } else {
+      try {
+        const response = await axios.get(`http://localhost:5000/employees?_sort=${value}&_order=asc`);
+        setData(response.data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+  };
 
-    const handleFilter = async (value) => {
-        try {
-            const response = await axios.get(`http://localhost:5000/employees?programming=${value}`);
-            setData(response.data);
-            setValue("");
-        } catch (err) {
-            console.log(err);
-        }
-    };
+  const handleFilter = (e) => {
+    const value = e.target.value;
+    const filteredData = data.filter((item) => item.skills.programming.includes(value));
+    setData(filteredData);
+  };
+
+
   
     const renderPagination = () => {
       if (currentPage === 0) {
@@ -190,10 +198,8 @@ function App() {
       </div>
       </div>
       <MDBRow>
-        <MDBCol size="8"><h5>Sort By:</h5><select style={{width:"50%",borderRadius:"1px",height:"30px"}}>
-          onChange={handleSort} 
-          value={sortValue}
-
+        <MDBCol size="8"><h5>Sort By:</h5><select style={{width:"50%",borderRadius:"1px",height:"30px"}} 
+        onChange={(e) => handleSort(e)} value={sortValue}>
           <option>Please select value</option>
           {sortOptions.map((item,index)=>(
             <option value={item} key={index}>
@@ -206,9 +212,9 @@ function App() {
         <MDBBtnGroup>
         <MDBCol size="4">
           <h5>Filter By:</h5>
-          <select style={{width: "50%", borderRadius: "1px", height: "30px"}}>
+          <select style={{width: "50%", borderRadius: "1px", height: "30px"}}
           onChange={handleFilter} 
-          value={sortValue}
+          value={sortValue}>
 
           <option>Please select value</option>
           {filterOption.map((item,index)=>(
